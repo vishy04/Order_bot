@@ -1,0 +1,94 @@
+{
+  "product_list": {
+    "1": {
+      "name": "Monster Energy Drink",
+      "description": "Carbonated Caffeinated Beverage",
+      "price": 122,
+      "tax": 3
+    },
+    "2": {
+      "name": "Red Bull Energy Drink",
+      "description": "Caffeinated energy drink",
+      "price": 115,
+      "tax": 2.5
+    },
+    "3": {
+      "name": "Coca-Cola",
+      "description": "Carbonated soft drink",
+      "price": 45,
+      "tax": 1.5
+    },
+    "4": {
+      "name": "Bottled Water",
+      "description": null,
+      "price": 20,
+      "tax": null
+    },
+    "5": {
+      "name": "Orange Juice",
+      "description": "Fresh packaged orange juice",
+      "price": 65,
+      "tax": 2
+    },
+    "6": {
+      "name": "Apple Juice",
+      "description": "Packaged apple fruit juice",
+      "price": 60,
+      "tax": 2
+    },
+    "7": {
+      "name": "Pepsi",
+      "description": "Carbonated cola soft drink",
+      "price": 45,
+      "tax": 1.5
+    },
+    "8": {
+      "name": "Sprite",
+      "description": "Lemon-lime flavored carbonated soft drink",
+      "price": 45,
+      "tax": 1.5
+    },
+    "9": {
+      "name": "Iced Tea",
+      "description": "Chilled ready-to-drink lemon iced tea",
+      "price": 55,
+      "tax": 1.8
+    },
+    "10": {
+      "name": "Cold Coffee",
+      "description": "Ready-to-drink chilled coffee beverage",
+      "price": 85,
+      "tax": 2.5
+    },
+    "11": {
+      "name": "Lemonade",
+      "description": "Refreshing lemon flavored drink",
+      "price": 50,
+      "tax": 1.5
+    },
+    "12": {
+      "name": "Coconut Water",
+      "description": "Natural packaged coconut water",
+      "price": 75,
+      "tax": 2
+    },
+    "13": {
+      "name": "Sports Drink",
+      "description": "Electrolyte hydration drink",
+      "price": 90,
+      "tax": 2.5
+    },
+    "14": {
+      "name": "Milkshake",
+      "description": "Chocolate flavored bottled milkshake",
+      "price": 95,
+      "tax": 3
+    },
+    "15": {
+      "name": "Soda Water",
+      "description": "Plain carbonated water",
+      "price": 35,
+      "tax": 1
+    }
+  }
+}
