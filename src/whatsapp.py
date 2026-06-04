@@ -8,7 +8,7 @@ PHONE_NUMBER = os.getenv("PHONE_NUMBER")
 GRAPH_API_VERSION = "v20.0"
 
 
-async def send_text_message(access_token: str, phone_id: str, graph_api_version: str):
+async def send_text_message(user: str, text: str):
 
     url = f"https://graph.facebook.com/{GRAPH_API_VERSION}/{PHONE_ID}/messages"
 
@@ -19,12 +19,41 @@ async def send_text_message(access_token: str, phone_id: str, graph_api_version:
 
     payload = {
         "messaging_product": "whatsapp",
-        "to": PHONE_NUMBER,
-        "type": "template",
-        "template": {"name": "hello_world", "language": {"code": "en_US"}},
+        "recipient_type": "individual",
+        "to": user,
+        "type": "text",
+        "text": {
+            "body": text,
+        },
     }
 
     async with httpx.AsyncClient(timeout=10) as client:
         response = await client.post(url, headers=headers, json=payload)
         response.raise_for_status()
         return response.json()
+
+
+# https://developers.facebook.com/documentation/business-messaging/whatsapp/get-started
+def extract_message(data: dict):
+    try:
+        value = data["entry"][0]["changes"][0]["value"]
+
+        if "messages" not in value:
+            return None
+
+        message = value["messages"][0]
+        sender = message["from"]
+        message_type = message["type"]
+
+        if message_type == "text":
+            body = message["text"]["body"]
+            return {
+                "sender": sender,
+                "type": "text",
+                "text": body,
+            }
+        else:
+            return {"sender": sender, "type": message_type, "text": None}
+
+    except KeyError:
+        return None

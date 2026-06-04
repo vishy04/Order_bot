@@ -2,26 +2,28 @@ import json
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from dotenv import load_dotenv
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 
-from src.schemas import Item
+from src.whatsapp import extract_message, send_text_message
 
+# loading the product_list json
 json_file_path = Path(__file__).parent / "product_list.json"
 with open(json_file_path, "r") as file:
     data = json.load(file)
 
 product_list = data["product_list"]
 
-
+# initializing
 app = FastAPI()
 
 
-# get all items
 @app.get("/")
 async def root():
     return "Product API is running"
 
 
+# get all items
 @app.get("/items/")
 async def get_all_items():
     return product_list
@@ -36,17 +38,8 @@ async def get_items(item_id: int):
     return item
 
 
-@app.post("/items/")
-async def create_item(item: Item):
-    item_dict = item.model_dump()
-
-    if item.tax is not None:
-        price_with_tax = item.price + item.tax
-        item_dict.update({"price_with_tax": price_with_tax})
-
-    return item_dict
-
-
+# handshake ( 1 time )
+load_dotenv()
 VERIFY_TOKEN = os.getenv("META_VERIFY_TOKEN")
 
 
@@ -62,3 +55,20 @@ async def verify_webhook(request: Request):
         return int(challenge)
 
     raise HTTPException(status_code=403, detail="INVALID VERIFICATION TOKEN")
+
+
+@app.post("/webhook")
+async def receive_webhook(request: Request, background_task: BackgroundTasks):
+    data = await request.json()
+
+    incoming = extract_message(data)
+
+    if not incoming:
+        return {"status": "ignored"}
+
+    sender = incoming["sender"]
+    text = incoming["text"]
+
+    background_task.add_task(send_text_message, sender, f"You Said:{text}")
+
+    return {"status": "received"}
