@@ -1,6 +1,9 @@
 import os
 
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 ACCESS_TOKEN = os.getenv("META_ACCESS_TOKEN")
 PHONE_ID = os.getenv("META_PHONE_ID")

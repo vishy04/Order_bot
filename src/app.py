@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 
 from src.whatsapp import extract_message, send_text_message
+from src.security import verify_meta_signature
+from src.bot import handle_user_message
 
 # loading the product_list json
 json_file_path = Path(__file__).parent / "product_list.json"
@@ -40,7 +42,7 @@ async def get_items(item_id: int):
 
 # handshake ( 1 time )
 load_dotenv()
-VERIFY_TOKEN = os.getenv("META_VERIFY_TOKEN")
+VERIFY_TOKEN = os.getenv("META_VERIFICATION_TOKEN")
 
 
 @app.get("/webhook")
@@ -59,6 +61,15 @@ async def verify_webhook(request: Request):
 
 @app.post("/webhook")
 async def receive_webhook(request: Request, background_task: BackgroundTasks):
+    #hmac verification
+    raw_body = await request.body() # hmac is format specific , pass bytes
+    signature = request.headers.get("X-Hub-Signature-256")
+    if not signature:
+        raise HTTPException(status_code=403, detail="MISSING SIGNATURE")
+
+    if not verify_meta_signature(raw_body=raw_body, signature_header=signature):
+        raise HTTPException(status_code=403, detail="INVALID SIGNATURE")
+
     data = await request.json()
 
     incoming = extract_message(data)
@@ -68,7 +79,11 @@ async def receive_webhook(request: Request, background_task: BackgroundTasks):
 
     sender = incoming["sender"]
     text = incoming["text"]
+    if not text:
+        reply = "Please send a text message."
+    else:
+        reply = handle_user_message(text)
 
-    background_task.add_task(send_text_message, sender, f"You Said:{text}")
+    background_task.add_task(send_text_message, sender, reply)
 
     return {"status": "received"}
