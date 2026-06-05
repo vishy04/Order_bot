@@ -4,7 +4,7 @@ from sqlalchemy import DateTime, Float, ForeignKey, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
-# creating a base class ( sgla said this )
+# creating a base class ( sqlal docs said this )
 class Base(DeclarativeBase):
     pass
 
