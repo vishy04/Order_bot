@@ -5,18 +5,25 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-ACCESS_TOKEN = os.getenv("META_ACCESS_TOKEN")
-PHONE_ID = os.getenv("META_PHONE_ID")
-PHONE_NUMBER = os.getenv("PHONE_NUMBER")
 GRAPH_API_VERSION = "v20.0"
 
 
 async def send_text_message(user: str, text: str):
+    access_token = os.getenv("META_ACCESS_TOKEN")
+    phone_id = os.getenv("META_PHONE_ID")
 
-    url = f"https://graph.facebook.com/{GRAPH_API_VERSION}/{PHONE_ID}/messages"
+    if not access_token:
+        print("WhatsApp send skipped: META_ACCESS_TOKEN is missing")
+        return {"status": "failed", "reason": "missing_access_token"}
+
+    if not phone_id:
+        print("WhatsApp send skipped: META_PHONE_ID is missing")
+        return {"status": "failed", "reason": "missing_phone_id"}
+
+    url = f"https://graph.facebook.com/{GRAPH_API_VERSION}/{phone_id}/messages"
 
     headers = {
-        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
     }
 
@@ -32,7 +39,15 @@ async def send_text_message(user: str, text: str):
 
     async with httpx.AsyncClient(timeout=10) as client:
         response = await client.post(url, headers=headers, json=payload)
-        response.raise_for_status()
+
+        if response.status_code >= 400:
+            print("WhatsApp send failed:", response.status_code, response.text)
+            return {
+                "status": "failed",
+                "status_code": response.status_code,
+                "error": response.text,
+            }
+
         return response.json()
 
 
@@ -49,14 +64,13 @@ def extract_message(data: dict):
         message_type = message["type"]
 
         if message_type == "text":
-            body = message["text"]["body"]
             return {
                 "sender": sender,
                 "type": "text",
-                "text": body,
+                "text": message["text"]["body"],
             }
-        else:
-            return {"sender": sender, "type": message_type, "text": None}
 
-    except KeyError:
+        return {"sender": sender, "type": message_type, "text": None}
+
+    except (KeyError, IndexError, TypeError):
         return None

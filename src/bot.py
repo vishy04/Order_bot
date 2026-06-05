@@ -1,33 +1,32 @@
-# src/bot.py
-
 import json
 from pathlib import Path
+from typing import Any
 
-json_file_path = Path(__file__).parent / "product_list.json"
+PRODUCTS_FILE = Path(__file__).parent / "product_list.json"
 
-with open(json_file_path, "r") as file:
+with open(PRODUCTS_FILE, "r") as file:
     data = json.load(file)
 
-product_list = data["product_list"]
+product_list: dict[str, dict[str, Any]] = data["product_list"]
 
 
 def handle_user_message(text: str) -> str:
-    text = text.lower().strip()
+    command = text.lower().strip()
 
-    if text in ["hi", "hello", "start"]:
+    if command in ["hi", "hello", "start"]:
         return get_welcome_message()
 
-    if text == "help":
+    if command == "help":
         return get_help_message()
 
-    if text in ["products", "menu", "items"]:
+    if command in ["products", "menu", "items"]:
         return get_product_list_message()
 
-    if text.isdigit():
-        return get_product_detail_message(text)
+    if command.isdigit():
+        return get_product_detail_message(command)
 
-    if text.startswith("order "):
-        product_id = text.replace("order ", "").strip()
+    if command.startswith("order "):
+        product_id = command.removeprefix("order ").strip()
         return place_order_message(product_id)
 
     return get_fallback_message()
@@ -57,8 +56,7 @@ def get_product_list_message() -> str:
 
     for product_id, product in product_list.items():
         name = product.get("name", "Unknown")
-        price = product.get("price", "N/A")
-        lines.append(f"{product_id}. {name} - ₹{price}")
+        lines.append(f"{product_id}. {name} - {format_price(product)}")
 
     lines.append("\nReply with product ID to see details.")
     lines.append('Reply "order 1" to order product 1.')
@@ -73,30 +71,31 @@ def get_product_detail_message(product_id: str) -> str:
         return "Product not found. Type products to see available items."
 
     name = product.get("name", "Unknown")
-    description = product.get("description", "No description available")
-    price = product.get("price", "N/A")
+    description = product.get("description") or "No description available"
 
     return (
         f"{name}\n\n"
         f"Description: {description}\n"
-        f"Price: ₹{price}\n\n"
+        f"Price: {format_price(product)}\n\n"
         f"To order, reply: order {product_id}"
     )
 
 
 def place_order_message(product_id: str) -> str:
+    if not product_id.isdigit():
+        return 'Please send order like this: "order 1".'
+
     product = product_list.get(product_id)
 
     if not product:
         return "Product not found. Type products to see available items."
 
     name = product.get("name", "Unknown")
-    price = product.get("price", "N/A")
 
     return (
         "Order received ✅\n\n"
         f"Product: {name}\n"
-        f"Price: ₹{price}\n\n"
+        f"Total: {format_price(product)}\n\n"
         "Our team will contact you soon."
     )
 
@@ -107,3 +106,14 @@ def get_fallback_message() -> str:
         "Type products to view items.\n"
         "Type help to see commands."
     )
+
+
+def format_price(product: dict[str, Any]) -> str:
+    price = product.get("price") or 0
+    tax = product.get("tax") or 0
+    total = price + tax
+
+    if isinstance(total, float) and total.is_integer():
+        total = int(total)
+
+    return f"₹{total}"
