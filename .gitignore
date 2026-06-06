@@ -50,3 +50,8 @@ logs/
 
 # Jupyter notebooks
 .ipynb_checkpoints/
+
+
+#Markdown and log files
+
+error_log.md

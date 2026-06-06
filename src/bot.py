@@ -2,6 +2,11 @@ import json
 from pathlib import Path
 from typing import Any
 
+from sqlalchemy import select
+
+from src.models import Product
+from src.seed_database import AsyncSessionLocal
+
 PRODUCTS_FILE = Path(__file__).parent / "product_list.json"
 
 with open(PRODUCTS_FILE, "r") as file:
@@ -10,7 +15,7 @@ with open(PRODUCTS_FILE, "r") as file:
 product_list: dict[str, dict[str, Any]] = data["product_list"]
 
 
-def handle_user_message(text: str) -> str:
+async def handle_user_message(text: str) -> str:
     command = text.lower().strip()
 
     if command in ["hi", "hello", "start"]:
@@ -19,11 +24,12 @@ def handle_user_message(text: str) -> str:
     if command == "help":
         return get_help_message()
 
-    if command in ["products", "menu", "items"]:
+    if command in ["products", "menu", "items", "product"]:
         return get_product_list_message()
 
     if command.isdigit():
-        return get_product_detail_message(command)
+        message = await get_product_detail_message(command)
+        return message
 
     if command.startswith("order "):
         product_id = command.removeprefix("order ").strip()
@@ -52,6 +58,7 @@ def get_help_message() -> str:
 
 
 def get_product_list_message() -> str:
+
     lines = ["Available products:\n"]
 
     for product_id, product in product_list.items():
@@ -64,21 +71,22 @@ def get_product_list_message() -> str:
     return "\n".join(lines)
 
 
-def get_product_detail_message(product_id: str) -> str:
-    product = product_list.get(product_id)
+async def get_product_detail_message(product_id: str) -> str:
+    async with AsyncSessionLocal() as session:
+        # e1: product_id should be int before passing
+        query = select(Product).where(Product.product_id == int(product_id))
 
-    if not product:
-        return "Product not found. Type products to see available items."
+        result = await session.execute(query)
+        product = result.scalar_one_or_none()
 
-    name = product.get("name", "Unknown")
-    description = product.get("description") or "No description available"
+        if not product:
+            return "Product not found. Type products to see available items."
 
-    return (
-        f"{name}\n\n"
-        f"Description: {description}\n"
-        f"Price: {format_price(product)}\n\n"
-        f"To order, reply: order {product_id}"
-    )
+        return (
+            f"{product.name}\n\n"
+            f"Description: {product.description}\n"
+            f"Price: {product.price}\n\n"
+        )
 
 
 def place_order_message(product_id: str) -> str:

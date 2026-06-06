@@ -40,7 +40,7 @@ async def seed_products():
                 name=details["name"],
                 description=details["description"],
                 price=float(details["price"]),
-                tax=float(details["tax"]) if details["tax"] else None,
+                tax=float(details["tax"]) if details["tax"] else 0,
             )
 
             # merge inserts new rows or updates existing rows with the same primary key

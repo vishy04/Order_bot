@@ -60,7 +60,8 @@ async def receive_webhook(request: Request, background_tasks: BackgroundTasks):
     if not text:
         reply = "Please send a text message."
     else:
-        reply = handle_user_message(text)
+        # turn to async as handle_user is async now after product database search
+        reply = await handle_user_message(text)
 
     background_tasks.add_task(send_text_message, sender, reply)
 
