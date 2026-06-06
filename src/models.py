@@ -14,7 +14,7 @@ class Product(Base):
 
     product_id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
-    description: Mapped[str] = mapped_column(Float, nullable=True)
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
     price: Mapped[float] = mapped_column(Float)
     tax: Mapped[float] = mapped_column(Float, nullable=True)
 
