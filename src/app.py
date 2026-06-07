@@ -2,16 +2,54 @@ import json
 import os
 
 from dotenv import load_dotenv
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.bot import handle_user_message
+from src.models import Orders
+from src.schemas import WebhookPayload
 from src.security import verify_meta_signature
+from src.seed_database import AsyncSessionLocal
 from src.whatsapp import extract_message, send_text_message
 
 load_dotenv()
 
 app = FastAPI()
+
 VERIFY_TOKEN = os.getenv("META_VERIFICATION_TOKEN")
+
+
+# function to use with fastapis depends fucntionality
+async def get_db():
+
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
+@app.post("/webhook/place-order")
+async def place_order(payload: WebhookPayload, db: AsyncSession = Depends(get_db)):
+
+    try:
+        new_order = Orders(
+            product_id=payload.product_id, customer_id=payload.customer_id
+        )
+
+        db.add(new_order)
+        await db.commit()
+
+        return {
+            "status": "success",
+            "message": f"Order created for {payload.product_id}",
+        }
+
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="Invalid ID")
+
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Internal error\nLOG:\n{e}")
 
 
 @app.get("/")

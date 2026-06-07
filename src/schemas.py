@@ -6,3 +6,8 @@ class Item(BaseModel):
     description: str | None = None
     price: float
     tax: float | None = None
+
+
+class WebhookPayload(BaseModel):
+    customer_id: int
+    product_id: int
