@@ -17,22 +17,16 @@ AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 
 async def seed_products():
+
     print("Start")
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        await conn.execute(
-            text(
-                "ALTER TABLE products "
-                "ALTER COLUMN description TYPE VARCHAR(255) "
-                "USING description::text"
-            )
-        )
 
     product_list_path = Path(__file__).with_name("product_list.json")
     with product_list_path.open("r") as file:
         data = json.load(file)
         products_list = data["product_list"]
+
     print("Product list loaded")
+
     async with AsyncSessionLocal() as session:
         for prod_id, details in products_list.items():
             new_product = Product(
